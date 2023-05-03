@@ -53,8 +53,8 @@ def CLossTest(args, data_folder_path='h5/', modality='visual', num_iters=101, st
         optimizer.zero_grad()
         all_loss = 0
 
-        for a_batch in vsd_dataloader:
-            breakpoint()
+        for i, a_batch in enumerate(vsd_dataloader):
+            print(f"batch {i}")
             x, t = a_batch
 
             T_pred = OSG_model(x.to(device))
