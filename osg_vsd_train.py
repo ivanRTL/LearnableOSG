@@ -86,4 +86,4 @@ def CLossTest(data_folder_path='h5/', modality='visual', num_iters=101, stop_par
     print('finished')
 
 if __name__ == "__main__":
-    CLossTest(num_iters=5)
+    CLossTest(num_iters=5, modality="audio")
