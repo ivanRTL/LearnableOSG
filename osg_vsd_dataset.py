@@ -45,7 +45,7 @@ def my_collate(batch):
         out = None
         max_length = max([x.shape[0] for x in batch])
         numel = max_length*len(batch)
-        storage = elem.storage()._new_shared(numel)
+        storage = elem.storage()._new_shared(numel, device=elem.storage().device)
         out = elem.new(storage)
         return torch.nn.utils.rnn.pad_sequence(batch, batch_first=True, padding_value=-1)
     elif elem_type.__module__ == 'numpy' and elem_type.__name__ != 'str_' \
