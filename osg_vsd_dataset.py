@@ -3,9 +3,11 @@ import torch
 import torch.utils.data
 import numpy as np
 import re
-from torch._six import container_abcs, string_classes, int_classes
+import collections.abc as container_abcs
 import h5py
 
+string_classes = str 
+int_classes = int
 np_str_obj_array_pattern = re.compile(r'[SaUO]')
 
 
