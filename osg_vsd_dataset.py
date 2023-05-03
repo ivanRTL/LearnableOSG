@@ -38,7 +38,6 @@ my_collate_err_msg_format = (
 
 def my_collate(batch):
     r"""Puts each data field into a tensor with outer dimension batch size"""
-
     elem = batch[0]
     elem_type = type(elem)
     if isinstance(elem, torch.Tensor):

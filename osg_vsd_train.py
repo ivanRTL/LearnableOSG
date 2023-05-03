@@ -1,3 +1,5 @@
+from argparse import ArgumentParser
+
 import torch
 import OSG_VSD as OSG
 import numpy as np
@@ -6,7 +8,7 @@ import osg_vsd_dataset
 import OptimalSequentialGrouping
 
 
-def CLossTest(data_folder_path='h5/', modality='visual', num_iters=101, stop_param=0.75):
+def CLossTest(args, data_folder_path='h5/', modality='visual', num_iters=101, stop_param=0.75):
 
     if modality=='visual':
         path_to_h5 = data_folder_path+'h5_visual/'
@@ -30,11 +32,11 @@ def CLossTest(data_folder_path='h5/', modality='visual', num_iters=101, stop_par
         weight_decay = 0  # 1e-2
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    device = torch.device("cuda")
+    # device = torch.device("cuda")
 
     vsd_dataset = osg_vsd_dataset.OSG_VSD_DATASET(path_to_h5=path_to_h5,device=device)
 
-    vsd_dataloader = torch.utils.data.DataLoader(vsd_dataset, collate_fn=osg_vsd_dataset.my_collate)
+    vsd_dataloader = torch.utils.data.DataLoader(vsd_dataset, collate_fn=osg_vsd_dataset.my_collate, batch_size=args.b_size)
 
     OSG_model = OSG.OSG_C(feature_sizes, K_max=K_max, BN=BN, DO=DO, dist_type=dist_type, dist_metric=dist_metric, device=device)
 
@@ -52,6 +54,7 @@ def CLossTest(data_folder_path='h5/', modality='visual', num_iters=101, stop_par
         all_loss = 0
 
         for a_batch in vsd_dataloader:
+            breakpoint()
             x, t = a_batch
 
             T_pred = OSG_model(x.to(device))
@@ -86,4 +89,7 @@ def CLossTest(data_folder_path='h5/', modality='visual', num_iters=101, stop_par
     print('finished')
 
 if __name__ == "__main__":
-    CLossTest(num_iters=5, modality="audio")
+    parser = ArgumentParser()
+    parser.add_argument("--b_size", type=int, default=1)
+
+    CLossTest(parser.parse_args(), num_iters=5, modality="audio")
