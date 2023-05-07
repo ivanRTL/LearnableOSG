@@ -70,13 +70,22 @@ class DIST(torch.nn.Module):
         self.dist_type = dist_type
         self.dist_metric = dist_metric
 
-    def forward(self, input_x):
-        input_x = self.network(input_x)
-        corr = torch.bmm(input_x, input_x.permute(0, 2, 1))
+    def forward_new(self, input_x):
+        x = []
+        for i in range(input_x.shape[0]):
+            x.append(self.network(input_x[i]))
+
+        x = torch.stack(x)
+        corr = torch.bmm(x, x.permute(0, 2, 1))
         square = torch.masked_select(corr, torch.eye(corr.shape[-1], device=self.device).ge(1))
 
-    def forward_old(self, input_x):
-        breakpoint()
+        square_rows = square.repeat(corr.shape[-1], 1).t().reshape(-1, corr.shape[-1], corr.shape[-1])
+        square_cols = square_rows.permute(0, 2, 1)
+
+        return (1.0 - corr / (square_rows * square_cols).clamp(min=1e-8).sqrt()) / 2.0
+
+    def forward(self, input_x):
+        # breakpoint()
         if list(input_x.shape)[0] > 1:
             print("Warning - expected batch size 1")
         x = input_x.squeeze(0)
@@ -133,6 +142,7 @@ class D_SUM_CALC(torch.nn.Module):
         D = input_D.squeeze(0)
         N = list(D.shape)[0]
         D_sum = torch.zeros(N, N, device=self.device)
+        breakpoint()
         # diagonal
         for ii in range(N):
             D_sum[ii, ii] = D[ii, ii]
@@ -214,7 +224,12 @@ class OSG_C(torch.nn.Module):
                 1, -1, x_input.shape[1]
             )
             D = self.DIST_FUNC(x_input)
+            breakpoint()
             D_sum = self.D_SUM_CALC(D)
+
+            old = self.D_SUM_CALC.forward(D)
+            new = self.D_SUM_CALC.forward_new(self.DIST_FUNC.forward_new(x))
+
             __, C_all = self.C_TABLE_ALL(D_sum)
             T_pred_all = torch.zeros(C_all.shape[3], device=self.device)
             for ind in range(C_all.shape[3]):
