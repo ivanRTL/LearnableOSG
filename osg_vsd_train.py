@@ -78,9 +78,9 @@ def CLossTest(
         for i, a_batch in enumerate(vsd_dataloader):
             print(f"batch {i}")
             breakpoint()
-            x, t = a_batch
+            x, t, l = a_batch
 
-            T_pred = OSG_model(x.to(device))
+            T_pred = OSG_model(x.to(device), l)
 
             loss = OSG.my_Tloss(T_pred.to(device), t.to(device), device=device)
             all_loss += loss.item()
