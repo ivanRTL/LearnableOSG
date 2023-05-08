@@ -72,6 +72,7 @@ class DIST(torch.nn.Module):
 
     def forward_new(self, input_x):
         x = []
+        #TODO: probably can be replaced with a CNN in order to remove loop
         for i in range(input_x.shape[0]):
             x.append(self.network(input_x[i]))
 
@@ -136,13 +137,52 @@ class D_SUM_CALC(torch.nn.Module):
         super(D_SUM_CALC, self).__init__()
         self.device = device
 
+    def forward_new(self, input_D):
+        
+        D_sum = torch.zeros_like(input_D)
+
+        batch_size, N = input_D.shape[0], input_D.shape[1] 
+
+        diag_size = torch.Tensor(N * [1])
+        main_d = torch.diag(diag_size)
+        one_d = torch.diag(diag_size[:-1], 1)
+
+        main_id_mask = main_d.repeat(batch_size, 1, 1).bool()
+
+        # set the diagonal for each batch
+        D_sum[main_id_mask] = input_D[main_id_mask]
+
+        # set diagonal that is offset by one from the main
+        blocks = input_D * (main_d + one_d + one_d.t())
+
+        kernel = torch.Tensor([[[[1, 1], [1, 1]]]])
+        block_sums = torch.nn.functional.conv2d(torch.unsqueeze(blocks, 1), kernel).squeeze()
+        D_sum[one_d.repeat(batch_size, 1, 1).bool()] = block_sums[main_id_mask[:, :-1, :-1]]
+
+        one_d_t_mask = one_d.t().repeat(batch_size, 1, 1).bool()
+        D_sum[one_d_t_mask] = input_D[one_d_t_mask]
+        
+        # rest
+        D_sum += (input_D + input_D.permute(0, 2, 1)).triu(2)
+        #TODO: very slow needs to be vectorized
+        for b_idx, b in enumerate(input_D.unbind()):
+            for oo in range(2, N):
+                for ii in range(0, N - oo):
+                    D_sum[b_idx, ii, ii + oo] += (
+                        + D_sum[b_idx, ii, ii + oo - 1]
+                        + D_sum[b_idx, ii + 1, ii + oo]
+                        - D_sum[b_idx, ii + 1, ii + oo - 1]
+                    )
+
+        return D_sum + D_sum.triu(2).permute(0, 2, 1)
+
     def forward(self, input_D):
         if list(input_D.shape)[0] > 1:
             print("Warning - expected batch size 1")
         D = input_D.squeeze(0)
         N = list(D.shape)[0]
         D_sum = torch.zeros(N, N, device=self.device)
-        breakpoint()
+        # breakpoint()
         # diagonal
         for ii in range(N):
             D_sum[ii, ii] = D[ii, ii]
@@ -171,7 +211,30 @@ class C_TABLE_ALL(torch.nn.Module):
         self.K = K
         self.device = device
 
+    def forward_new(self, input_D_sum):
+            
+            b, N, N = input_D_sum.shape
+
+            C = torch.zeros(b, N, self.K, device=self.device)
+            C_all = -1 * torch.ones(b, N, self.K, N, device=self.device)
+
+            C[:, :N, 0] = input_D_sum[:, :N, N - 1]
+            C_all[:, :N, 0, N - 1] = 1.0
+            
+            # TODO needs to be vectorized
+            for idx, D_sum in enumerate(input_D_sum.unbind()):
+                for kk in range(1, self.K):
+                    for nn in range(0, N - kk):
+                        temp = torch.empty(N - kk - nn, device=self.device)
+                        for ii in range(nn, N - kk):
+                            temp[ii - nn] = D_sum[nn, ii] + C[idx, ii + 1, kk - 1]
+                        C_all[idx, nn, kk, nn : N - kk] = torch.nn.functional.softmin(temp, dim=0)
+                        C[idx, nn, kk] = torch.min(temp)
+
+            return C, C_all
+
     def forward(self, input_D_sum):
+        # breakpoint()
         if list(input_D_sum.shape)[0] > 1:
             print("Warning - expected batch size 1")
         D_sum = input_D_sum.squeeze(0)
@@ -183,6 +246,7 @@ class C_TABLE_ALL(torch.nn.Module):
         for nn in range(N):
             C[nn, 0] = D_sum[nn, N - 1]
             C_all[nn, 0, N - 1] = 1.0
+        # breakpoint()
         for kk in range(1, K):
             for nn in range(0, N - kk):
                 temp = torch.empty(N - kk - nn, device=self.device)
@@ -214,21 +278,20 @@ class OSG_C(torch.nn.Module):
         self.C_TABLE_ALL = C_TABLE_ALL(K_max, device)
         self.device = device
 
-    def forward(self, x):
+    def forward(self, x, l):
         breakpoint()
         T_list = list()
         if len(x.shape) == 2:
             x.unsqueeze_(0)
+
+        import time
+        s_time = time.time()
         for x_input in x.unbind():
             x_input = torch.masked_select(x_input, ~torch.isnan(x_input)).view(
                 1, -1, x_input.shape[1]
             )
             D = self.DIST_FUNC(x_input)
-            breakpoint()
             D_sum = self.D_SUM_CALC(D)
-
-            old = self.D_SUM_CALC.forward(D)
-            new = self.D_SUM_CALC.forward_new(self.DIST_FUNC.forward_new(x))
 
             __, C_all = self.C_TABLE_ALL(D_sum)
             T_pred_all = torch.zeros(C_all.shape[3], device=self.device)
@@ -241,4 +304,10 @@ class OSG_C(torch.nn.Module):
             )
             T_list.append(the_padding(T_pred_all))
         T_out = torch.stack(T_list)
+        print(time.time() - s_time)
+
+        s_time = time.time()
+        _, C_all_new = self.C_TABLE_ALL.forward_new(self.D_SUM_CALC.forward_new(self.DIST_FUNC.forward_new(x)))
+        T_out_new = (C_all_new * C_all_new.ge(0)).sum(1).sum(1) / C_all_new.ge(0).sum(1).sum(1)
+        print(time.time() - s_time)
         return T_out

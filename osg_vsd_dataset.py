@@ -3,6 +3,7 @@ import glob
 
 import torch
 import h5py
+import numpy as np
 
 
 class OSG_VSD_DATASET(torch.utils.data.Dataset):
@@ -17,9 +18,10 @@ class OSG_VSD_DATASET(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         data = h5py.File(os.path.join(self.path_to_h5, f"{idx}.hdf5"), "r")
 
+        feature_vec = data["x"][:]
         return torch.tensor(
-            data["x"][:], dtype=torch.float, device=self.device
-        ), torch.tensor(data["t"][:], dtype=torch.float, device=self.device)
+            feature_vec, dtype=torch.float, device=self.device
+        ), torch.tensor(data["t"][:], dtype=torch.float, device=self.device), torch.tensor([feature_vec.shape[0]], dtype=torch.int, device=self.device)
 
 
 my_collate_err_msg_format = "default_collate: batch must contain tensors, numpy arrays, numbers, dicts or lists; found {}"
