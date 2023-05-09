@@ -91,7 +91,8 @@ class D_SUM_CALC(torch.nn.Module):
         # diagonal at offset 1 is equal to the sum of 2x2 blocks
         # along the main diagonal direction which can be achieved
         # directly with a convolution
-        kernel = torch.Tensor([[[[1., 1.], [1., 1.]]]])
+        kernel = torch.Tensor([[[[1, 1], [1, 1]]]])
+        kernel.to(input_D.device)
         diag_blocks = (
             torch.nn.functional.conv2d(torch.unsqueeze(input_D, 1), kernel)
             .squeeze()
@@ -113,7 +114,8 @@ class D_SUM_CALC(torch.nn.Module):
         # the final summation for each diagonal depends on values
         # from the previous two thus we loop over each diagonal position
         # and compute the value using a convolution as before defined by a 2x2 block
-        kernel = torch.Tensor([[[[1., 0.], [-1., 1.]]]])
+        kernel = torch.Tensor([[[[1, 0], [-1, 1]]]])
+        kernel.to(D_sum.device)
         for diag_idx in range(2, input_D.shape[1]):
             diag = torch.nn.functional.conv2d(
                 torch.unsqueeze(D_sum, 1), kernel
