@@ -82,7 +82,7 @@ class D_SUM_CALC(torch.nn.Module):
         self.device = device
 
     def forward(self, input_D):
-        D_sum = torch.zeros_like(input_D)
+        D_sum = torch.zeros_like(input_D, device=self.device)
 
         # set the diagonal for each batch to be equal
         # to diagonal of `input_D`
@@ -93,6 +93,9 @@ class D_SUM_CALC(torch.nn.Module):
         # directly with a convolution
         kernel = torch.Tensor([[[[1, 1], [1, 1]]]])
         kernel.to(input_D.device)
+
+        print(input_D.device)
+        print(kernel.device)
         diag_blocks = (
             torch.nn.functional.conv2d(torch.unsqueeze(input_D, 1), kernel)
             .squeeze()
