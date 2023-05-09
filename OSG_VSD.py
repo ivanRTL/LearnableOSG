@@ -164,15 +164,11 @@ class D_SUM_CALC(torch.nn.Module):
         
         # rest
         D_sum += (input_D + input_D.permute(0, 2, 1)).triu(2)
-        #TODO: very slow needs to be vectorized
-        for b_idx, b in enumerate(input_D.unbind()):
-            for oo in range(2, N):
-                for ii in range(0, N - oo):
-                    D_sum[b_idx, ii, ii + oo] += (
-                        + D_sum[b_idx, ii, ii + oo - 1]
-                        + D_sum[b_idx, ii + 1, ii + oo]
-                        - D_sum[b_idx, ii + 1, ii + oo - 1]
-                    )
+        
+        kernel = torch.Tensor([[[[1, 0], [-1, 1]]]])
+        corner = torch.nn.functional.conv2d(torch.unsqueeze(D_sum,1), kernel, stride=(1, 1)).squeeze()[:, 1:, 1:].triu()
+        # breakpoint()
+        D_sum += torch.nn.functional.pad(corner, (2, 0, 0, 2), mode="constant", value=0)
 
         return D_sum + D_sum.triu(2).permute(0, 2, 1)
 
@@ -292,6 +288,8 @@ class OSG_C(torch.nn.Module):
             )
             D = self.DIST_FUNC(x_input)
             D_sum = self.D_SUM_CALC(D)
+            new = self.D_SUM_CALC.forward_new(self.DIST_FUNC.forward_new(x))
+            breakpoint()
 
             __, C_all = self.C_TABLE_ALL(D_sum)
             T_pred_all = torch.zeros(C_all.shape[3], device=self.device)
