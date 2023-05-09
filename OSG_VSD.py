@@ -3,8 +3,6 @@ import numpy as np
 
 
 def my_Tloss(pred, gt_idx, device=torch.device("cuda")):
-    print(pred.device)
-    print(gt_idx.device)
     padding_mask = gt_idx.eq(-1)
 
     gt_idx[padding_mask] = 0
@@ -12,8 +10,7 @@ def my_Tloss(pred, gt_idx, device=torch.device("cuda")):
     gt_idx = gt_idx + padding_mask.int() * gt_idx.max(1).values.unsqueeze(1)
 
     gt = torch.zeros_like(pred, device=device)
-    print(gt.device)
-    gt.scatter_(1, gt_idx.type(torch.LongTensor), 1)
+    gt.scatter_(1, gt_idx.long(), 1)
 
     loss = torch.masked_select(pred, gt.bool()).clamp(min=1e-3).log().neg().sum()
 
