@@ -77,12 +77,11 @@ def CLossTest(
 
         for i, a_batch in enumerate(vsd_dataloader):
             print(f"batch {i}")
-            breakpoint()
-            x, t, l = a_batch
+            x, t = a_batch
 
-            T_pred = OSG_model(x.to(device), l)
-
-            loss = OSG.my_Tloss(T_pred.to(device), t.to(device), device=device)
+            # torch.autograd.set_detect_anomaly(True)
+            T_pred_new = OSG_model(x.to(device))
+            loss = OSG.my_Tloss(T_pred_new.to(device), t.to(device), device=device)
             all_loss += loss.item()
 
             loss.backward()
