@@ -125,4 +125,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    CLossTest(args, num_iters=args.num_iters, modality="audio")
+    CLossTest(args, num_iters=args.n_iters, modality="audio")
