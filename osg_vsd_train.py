@@ -121,5 +121,8 @@ def CLossTest(
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--b_size", type=int, default=1)
+    parser.add_argument("--n_iters", type=int, default=10)
 
-    CLossTest(parser.parse_args(), num_iters=5, modality="audio")
+    args = parser.parse_args()
+
+    CLossTest(args, num_iters=args.num_iters, modality="audio")
