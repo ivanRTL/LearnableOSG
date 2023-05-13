@@ -35,7 +35,7 @@ def CLossTest(
     vsd_dataset = osg_vsd_dataset.OSG_VSD_DATASET(path_to_h5=data_folder_path, device=device)
 
     generator1 = torch.Generator().manual_seed(42)
-    train_data, test_data = torch.utils.data.random_split(vsd_dataset, [0.8, 0.2], generator=generator1)
+    train_data, test_data = torch.utils.data.random_split(vsd_dataset, [16, 4], generator=generator1)
 
     train_dataloader = torch.utils.data.DataLoader(
         train_data, collate_fn=osg_vsd_dataset.my_collate, batch_size=args.b_size
