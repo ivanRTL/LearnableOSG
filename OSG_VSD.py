@@ -95,7 +95,7 @@ class D_SUM_CALC(torch.nn.Module):
         kernel = torch.tensor([[[[1., 1.], [1., 1.]]]], device=self.device)
         diag_blocks = (
             torch.nn.functional.conv2d(torch.unsqueeze(input_D, 1), kernel)
-            .squeeze()
+            .squeeze(dim=1)
             .diagonal(dim1=1, dim2=2)
         )
         D_sum = D_sum + torch.diag_embed(diag_blocks, offset=1)
@@ -118,7 +118,7 @@ class D_SUM_CALC(torch.nn.Module):
         for diag_idx in range(2, input_D.shape[1]):
             diag = torch.nn.functional.conv2d(
                 torch.unsqueeze(D_sum, 1), kernel
-            ).squeeze()
+            ).squeeze(dim=1)
             diag = diag.diagonal(offset=diag_idx - 1, dim1=1, dim2=2)
             D_sum = D_sum + torch.diag_embed(diag, offset=diag_idx)
 
