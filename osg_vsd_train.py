@@ -5,7 +5,7 @@ import os
 np.set_printoptions(linewidth=300)
 import osg_vsd_dataset
 import OptimalSequentialGrouping
-
+from argparse import ArgumentParser
 
 def CLossTest(data_folder_path='h5/', modality='visual', num_iters=101, stop_param=0.75):
 
@@ -92,4 +92,9 @@ def CLossTest(data_folder_path='h5/', modality='visual', num_iters=101, stop_par
     print('finished')
 
 if __name__ == "__main__":
-    CLossTest(data_folder_path="/dbfs/mnt/ds-data-apps/ivan/h5")
+    parser = ArgumentParser()
+
+    parser.add_argument("--path", type=str)
+
+    args = parser.parse_args()
+    CLossTest(data_folder_path=args.path)
