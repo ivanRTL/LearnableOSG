@@ -174,6 +174,8 @@ class OSG_C(torch.nn.Module):
         self.device = device
 
     def forward(self, x):
+        if len(x.shape) == 2:
+            x = torch.unsqueeze(x, 0)
         _, C_all = self.C_TABLE_ALL.forward(
             self.D_SUM_CALC.forward(self.DIST_FUNC.forward(x))
         )
