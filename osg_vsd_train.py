@@ -24,10 +24,10 @@ def CLossTest(
     weight_decay=0,
 ):
     if modality == "visual":
-        d, K_max = 2048, 5
+        d, K_max = 2048, 50
         feature_sizes = [d, 3000, 3000, 1000, 100]
     elif modality == "audio":
-        d, K_max = 128, 5
+        d, K_max = 128, 50
         feature_sizes = [d, 200, 200, 100, 20]
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -35,7 +35,7 @@ def CLossTest(
     vsd_dataset = osg_vsd_dataset.OSG_VSD_DATASET(path_to_h5=data_folder_path, device=device)
 
     generator1 = torch.Generator().manual_seed(42)
-    train_data, test_data = torch.utils.data.random_split(vsd_dataset, [16, 5], generator=generator1)
+    train_data, test_data = torch.utils.data.random_split(vsd_dataset, [0.8, 0.2], generator=generator1)
 
     train_dataloader = torch.utils.data.DataLoader(
         train_data, collate_fn=osg_vsd_dataset.my_collate, batch_size=args.b_size
@@ -108,6 +108,7 @@ def CLossTest(
             boundaries_new = OSG_np.blockDivideDSum(D_new, t.size)
             F_temp, __, __ = OSG_np.FCO(boundaries_new, t)
             F_trn += F_temp
+            print(OSG_model(x_orig))
 
         print(
             "Iteration "
