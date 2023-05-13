@@ -100,7 +100,7 @@ def CLossTest(
 
         F_trn = 0
         for index in range(len(test_data)):
-            print(test_data[index])
+            # print(test_data[index])
             x_orig, t_orig = test_data[index]
             t = t_orig.cpu().numpy()
             D_temp = OSG_model.DIST_FUNC(x_orig.unsqueeze(0))
@@ -108,7 +108,7 @@ def CLossTest(
             boundaries_new = OSG_np.blockDivideDSum(D_new, t.size)
             F_temp, __, __ = OSG_np.FCO(boundaries_new, t)
             F_trn += F_temp
-            print(OSG_model(x_orig))
+            # print(OSG_model(x_orig))
 
         print(
             "Iteration "
