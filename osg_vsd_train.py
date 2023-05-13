@@ -24,10 +24,10 @@ def CLossTest(
     weight_decay=0,
 ):
     if modality == "visual":
-        d, K_max = 2048, 50
+        d, K_max = 2048, 5
         feature_sizes = [d, 3000, 3000, 1000, 100]
     elif modality == "audio":
-        d, K_max = 128, 50
+        d, K_max = 128, 5
         feature_sizes = [d, 200, 200, 100, 20]
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
