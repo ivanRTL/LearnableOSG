@@ -47,11 +47,12 @@ def CLossTest(data_folder_path='h5/', modality='visual', num_iters=101, stop_par
 
     first_loss = 0
     for iteration in range(num_iters):
-
+        print(f"Iteration {iteration}")
         optimizer.zero_grad()
         all_loss = 0
 
-        for a_batch in train_loader:
+        for i, a_batch in enumerate(train_loader):
+            print(f"batch {i}")
             x, t = a_batch
 
             T_pred = OSG_model(x.to(device))
