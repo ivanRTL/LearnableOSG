@@ -10,13 +10,13 @@ class OSG_VSD_DATASET(torch.utils.data.Dataset):
     def __init__(self, path_to_h5, device):
         self.path_to_h5 = path_to_h5
         self.device = device
-        self.num_of_h5 = len(glob.glob(os.path.join(path_to_h5, "*.hdf5")))
+        self.num_of_h5 = len(glob.glob(os.path.join(path_to_h5, "*.h5")))
 
     def __len__(self):
         return self.num_of_h5
 
     def __getitem__(self, idx):
-        data = h5py.File(os.path.join(self.path_to_h5, f"{idx}.hdf5"), "r")
+        data = h5py.File(os.path.join(self.path_to_h5, f"{idx}.h5"), "r")
 
         return torch.tensor(
             data["x"][:], dtype=torch.float, device=self.device

@@ -24,20 +24,24 @@ def CLossTest(
     weight_decay=0,
 ):
     if modality == "visual":
-        path_to_h5 = os.path.join(data_folder_path, "h5_visual")
         d, K_max = 2048, 5
         feature_sizes = [d, 3000, 3000, 1000, 100]
     elif modality == "audio":
-        path_to_h5 = os.path.join(data_folder_path, "h5_audio")
         d, K_max = 128, 5
         feature_sizes = [d, 200, 200, 100, 20]
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    vsd_dataset = osg_vsd_dataset.OSG_VSD_DATASET(path_to_h5=path_to_h5, device=device)
+    vsd_dataset = osg_vsd_dataset.OSG_VSD_DATASET(path_to_h5=data_folder_path, device=device)
 
-    vsd_dataloader = torch.utils.data.DataLoader(
-        vsd_dataset, collate_fn=osg_vsd_dataset.my_collate, batch_size=args.b_size
+    generator1 = torch.Generator().manual_seed(42)
+    train_data, test_data = torch.utils.data.random_split(vsd_dataset, [16, 5], generator=generator1)
+
+    train_dataloader = torch.utils.data.DataLoader(
+        train_data, collate_fn=osg_vsd_dataset.my_collate, batch_size=args.b_size
+    )
+    test_dataloader = torch.utils.data.DataLoader(
+        test_data, collate_fn=osg_vsd_dataset.my_collate, batch_size=1
     )
 
     OSG_model = OSG.OSG_C(
@@ -75,7 +79,7 @@ def CLossTest(
         optimizer.zero_grad()
         all_loss = 0
 
-        for i, a_batch in enumerate(vsd_dataloader):
+        for i, a_batch in enumerate(train_dataloader):
             print(f"batch {i}")
             x, t = a_batch
 
@@ -85,6 +89,7 @@ def CLossTest(
             all_loss += loss.item()
 
             loss.backward()
+            break
 
         if iteration == 0:
             first_loss = all_loss
@@ -94,8 +99,9 @@ def CLossTest(
         OSG_np = OptimalSequentialGrouping.OptimalSequentialGrouping()
 
         F_trn = 0
-        for an_index in range(len(vsd_dataset)):
-            x_orig, t_orig = vsd_dataset[an_index]
+        for batch in range(len(test_dataloader)):
+            print(batch)
+            x_orig, t_orig = batch
             t = t_orig.cpu().numpy()
             D_temp = OSG_model.DIST_FUNC(x_orig.unsqueeze(0))
             D_new = D_temp.squeeze(0).cpu().detach().numpy()
@@ -122,7 +128,8 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--b_size", type=int, default=1)
     parser.add_argument("--n_iters", type=int, default=10)
+    parser.add_argument("--path", type=str)
 
     args = parser.parse_args()
 
-    CLossTest(args, num_iters=args.n_iters, modality="audio")
+    CLossTest(args, num_iters=args.n_iters, modality="visual", data_folder_path=args.path)
