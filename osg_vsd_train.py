@@ -1,6 +1,7 @@
 import torch
 import OSG_VSD as OSG
 import numpy as np
+import os
 np.set_printoptions(linewidth=300)
 import osg_vsd_dataset
 import OptimalSequentialGrouping
@@ -79,6 +80,10 @@ def CLossTest(data_folder_path='h5/', modality='visual', num_iters=101, stop_par
             boundaries_new = OSG_np.blockDivideDSum(D_new, t.size)
             F_temp, __, __ = OSG_np.FCO(boundaries_new, t)
             F_trn += F_temp
+
+            out = OSG_model(x_orig.to(device).cpu().numpy())
+            with open(os.path.join(data_folder_path, f"../save_{iteration}.npy"), 'wb') as f:
+                np.save(f, out)
 
         print('Iteration '+str(iteration)+ ', loss: '+str(all_loss)+', F-score: '+str(F_trn))
 
