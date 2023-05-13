@@ -82,6 +82,7 @@ class D_SUM_CALC(torch.nn.Module):
         self.device = device
 
     def forward(self, input_D):
+        print(input_D.shape)
         D_sum = torch.zeros_like(input_D, device=self.device)
 
         # set the diagonal for each batch to be equal
