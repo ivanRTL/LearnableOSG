@@ -82,7 +82,7 @@ def CLossTest(data_folder_path='h5/', modality='visual', num_iters=101, stop_par
             F_trn += F_temp
 
             out = OSG_model(x_orig.to(device).cpu().numpy())
-            with open(os.path.join(data_folder_path, f"../save_{iteration}.npy"), 'wb') as f:
+            with open(os.path.join(data_folder_path, f"../save_{iteration}_{an_index}.npy"), 'wb') as f:
                 np.save(f, out)
 
         print('Iteration '+str(iteration)+ ', loss: '+str(all_loss)+', F-score: '+str(F_trn))
