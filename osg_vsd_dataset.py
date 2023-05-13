@@ -18,6 +18,8 @@ class OSG_VSD_DATASET(torch.utils.data.Dataset):
     def __init__(self, path_to_h5, device):
         self.path_to_h5 = path_to_h5
         self.device = device
+        print(path_to_h5)
+        print(glob.glob(os.path.join(path_to_h5, "*.h5")))
         self.num_of_h5 = glob.glob(os.path.join(path_to_h5, "*.h5"))
 
 
