@@ -25,7 +25,7 @@ class OSG_VSD_DATASET(torch.utils.data.Dataset):
         return len(self.num_of_h5)
 
     def __getitem__(self, idx):
-        the_file = h5py.File(os.path.join(self.path_to_h5, self.num_of_h5[idx]), 'r')
+        the_file = h5py.File(self.num_of_h5[idx], 'r')
         return torch.tensor(the_file['x'][:], dtype=torch.float, device=self.device), torch.tensor(the_file['t'][:], dtype=torch.float, device=self.device)
 
 def my_collate_old(batch):
