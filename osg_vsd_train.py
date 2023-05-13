@@ -61,6 +61,7 @@ def CLossTest(data_folder_path='h5/', modality='visual', num_iters=101, stop_par
             all_loss += loss.item()
 
             loss.backward()
+            break
 
         if iteration == 0:
             first_loss = all_loss
