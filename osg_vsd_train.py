@@ -74,7 +74,7 @@ def CLossTest(data_folder_path='h5/', modality='visual', num_iters=101, stop_par
         for an_index in range(len(test_dataset)):
             x_orig, t_orig = vsd_dataset[an_index]
             t = t_orig.cpu().numpy()
-            D_temp = OSG_model.module.DIST_FUNC(x_orig.unsqueeze(0))
+            D_temp = OSG_model.DIST_FUNC(x_orig.unsqueeze(0))
             D_new = D_temp.squeeze(0).cpu().detach().numpy()
             boundaries_new = OSG_np.blockDivideDSum(D_new, t.size)
             F_temp, __, __ = OSG_np.FCO(boundaries_new, t)
