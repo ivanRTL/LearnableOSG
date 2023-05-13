@@ -5,6 +5,8 @@ import numpy as np
 import re
 import collections.abc as container_abcs
 import h5py
+import glob
+import os
 
 string_classes = str 
 int_classes = int
@@ -16,14 +18,14 @@ class OSG_VSD_DATASET(torch.utils.data.Dataset):
     def __init__(self, path_to_h5, device):
         self.path_to_h5 = path_to_h5
         self.device = device
-        self.num_of_h5 = 51
+        self.num_of_h5 = glob.glob(os.path.join(path_to_h5, "*.h5"))
 
 
     def __len__ (self):
-        return self.num_of_h5
+        return len(self.num_of_h5)
 
     def __getitem__(self, idx):
-        the_file = h5py.File(self.path_to_h5+str(idx)+'.hdf5', 'r')
+        the_file = h5py.File(os.path.join(self.path_to_h5, self.num_of_h5[idx]), 'r')
         return torch.tensor(the_file['x'], dtype=torch.float, device=self.device), torch.tensor(the_file['t'], dtype=torch.float, device=self.device)
 
 def my_collate_old(batch):

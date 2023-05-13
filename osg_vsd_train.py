@@ -9,8 +9,7 @@ import OptimalSequentialGrouping
 def CLossTest(data_folder_path='h5/', modality='visual', num_iters=101, stop_param=0.75):
 
     if modality=='visual':
-        path_to_h5 = data_folder_path+'h5_visual/'
-        d, K_max = 2048, 5
+        d, K_max = 2048, 50
         BN = True
         DO = 0.0
         dist_metric = 'cosine'
@@ -19,8 +18,7 @@ def CLossTest(data_folder_path='h5/', modality='visual', num_iters=101, stop_par
         learning_rate = 0.005
         weight_decay = 0  # 1e-2
     elif modality=='audio':
-        path_to_h5 = data_folder_path+'h5_audio/'
-        d, K_max = 128, 5
+        d, K_max = 128, 50
         BN = True
         DO = 0.0
         dist_metric = 'cosine'
@@ -32,9 +30,11 @@ def CLossTest(data_folder_path='h5/', modality='visual', num_iters=101, stop_par
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     device = torch.device("cuda")
 
-    vsd_dataset = osg_vsd_dataset.OSG_VSD_DATASET(path_to_h5=path_to_h5,device=device)
+    vsd_dataset = osg_vsd_dataset.OSG_VSD_DATASET(path_to_h5=data_folder_path,device=device)
+    train_dataset, test_dataset = torch.utils.data.random_split(vsd_dataset, [16, 4])
 
-    vsd_dataloader = torch.utils.data.DataLoader(vsd_dataset, collate_fn=osg_vsd_dataset.my_collate)
+    train_loader = torch.utils.data.DataLoader(train_dataset, collate_fn=osg_vsd_dataset.my_collate)
+    test_loader = torch.utils.data.DataLoader(test_dataset, collate_fn=osg_vsd_dataset.my_collate)
 
     OSG_model = OSG.OSG_C(feature_sizes, K_max=K_max, BN=BN, DO=DO, dist_type=dist_type, dist_metric=dist_metric, device=device)
 
@@ -51,7 +51,7 @@ def CLossTest(data_folder_path='h5/', modality='visual', num_iters=101, stop_par
         optimizer.zero_grad()
         all_loss = 0
 
-        for a_batch in vsd_dataloader:
+        for a_batch in train_loader:
             x, t = a_batch
 
             T_pred = OSG_model(x.to(device))
@@ -69,7 +69,7 @@ def CLossTest(data_folder_path='h5/', modality='visual', num_iters=101, stop_par
         OSG_np = OptimalSequentialGrouping.OptimalSequentialGrouping()
 
         F_trn = 0
-        for an_index in range(len(vsd_dataset)):
+        for an_index in range(len(test_dataset)):
             x_orig, t_orig = vsd_dataset[an_index]
             t = t_orig.cpu().numpy()
             D_temp = OSG_model.module.DIST_FUNC(x_orig.unsqueeze(0))
@@ -86,4 +86,4 @@ def CLossTest(data_folder_path='h5/', modality='visual', num_iters=101, stop_par
     print('finished')
 
 if __name__ == "__main__":
-    CLossTest(num_iters=5)
+    CLossTest(data_folder_path="/dbfs/mnt/ds-data-apps/ivan/h5")
