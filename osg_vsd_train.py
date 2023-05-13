@@ -99,9 +99,9 @@ def CLossTest(
         OSG_np = OptimalSequentialGrouping.OptimalSequentialGrouping()
 
         F_trn = 0
-        for batch in range(len(test_dataloader)):
-            print(batch)
-            x_orig, t_orig = batch
+        for index in range(len(test_data)):
+            print(test_data[index])
+            x_orig, t_orig = test_data[index]
             t = t_orig.cpu().numpy()
             D_temp = OSG_model.DIST_FUNC(x_orig.unsqueeze(0))
             D_new = D_temp.squeeze(0).cpu().detach().numpy()
